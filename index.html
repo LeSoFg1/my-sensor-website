@@ -500,23 +500,20 @@
 
         // API Functions (replace with your actual API endpoints)
         async function fetchSensorData() {
-            try {
-                // Replace with your actual API endpoint
-                // const response = await fetch('/api/sensor-data');
-                // const data = await response.json();
-                
-                // For now, simulate changing data
-                sensorData.angleX += (Math.random() - 0.5) * 2;
-                sensorData.angleY += (Math.random() - 0.5) * 2;
-                sensorData.distance += (Math.random() - 0.5) * 0.5;
-                sensorData.lastUpdate = new Date();
-                
-                updateDisplay();
-            } catch (error) {
-                console.error('Failed to fetch sensor data:', error);
-                addAlert('danger', 'Failed to update sensor data');
-            }
-        }
+    try {
+        const response = await fetch('./data/sensor-data.json');
+        const data = await response.json();
+        
+        // Update sensorData with real data
+        sensorData = data;
+        sensorData.lastUpdate = new Date();
+        
+        updateDisplay();
+    } catch (error) {
+        console.error('Failed to fetch sensor data:', error);
+        addAlert('danger', 'Failed to update sensor data');
+    }
+}
 
         function refreshData() {
             fetchSensorData();
