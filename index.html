@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manhole Monitoring System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .status-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+        }
+
+        .status-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .status-safe { color: #48bb78; }
+        .status-warning { color: #ed8936; }
+        .status-danger { color: #e53e3e; }
+
+        .status-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .status-value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .panel h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .data-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .data-label {
+            font-size: 0.9em;
+            color: #718096;
+            margin-bottom: 5px;
+        }
+
+        .data-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .map-container {
+            height: 300px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #718096;
+            font-size: 1.1em;
+            margin-top: 20px;
+        }
+
+        .alert-log {
+            grid-column: 1 / -1;
+        }
+
+        .alert-item {
+            background: #fed7d7;
+            border: 1px solid #feb2b2;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .alert-item.warning {
+            background: #fefcbf;
+            border-color: #f6e05e;
+        }
+
+        .alert-item.info {
+            background: #bee3f8;
+            border-color: #90cdf4;
+        }
+
+        .alert-icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-time {
+            font-size: 0.9em;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 0 10px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .online { background-color: #48bb78; }
+        .offline { background-color: #e53e3e; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚧 Manhole Monitoring System</h1>
+            <p style="text-align: center; color: #718096; margin-top: 10px;">
+                <span class="status-indicator online"></span>
+                System Online - Last Update: <span id="lastUpdate">--:--:--</span>
+            </p>
+        </div>
+
+        <!-- Status Overview -->
+        <div class="status-overview">
+            <div class="status-card">
+                <div class="status-icon status-safe" id="coverStatus">🛡️</div>
+                <div class="status-title">Cover Status</div>
+                <div class="status-value" id="coverValue">Secure</div>
+            </div>
+            
+            <div class="status-card">
+                <div class="status-icon status-safe" id="tiltStatus">📐</div>
+                <div class="status-title">Tilt Angle</div>
+                <div class="status-value" id="tiltValue">Normal</div>
+            </div>
+            
+            <div class="status-card">
+                <div class="status-icon status-safe" id="locationStatus">📍</div>
+                <div class="status-title">Location</div>
+                <div class="status-value" id="locationValue">Tracking</div>
+            </div>
+            
+            <div class="status-card">
+                <div class="status-icon status-safe" id="gpsStatus">🛰️</div>
+                <div class="status-title">GPS Signal</div>
+                <div class="status-value" id="gpsValue">Strong</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sensor Data Panel -->
+            <div class="panel">
+                <h2>📊 Sensor Readings</h2>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-label">Latitude</div>
+                        <div class="data-value" id="latitude">33.5731</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Longitude</div>
+                        <div class="data-value" id="longitude">-7.5898</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Angle X</div>
+                        <div class="data-value" id="angleX">2.3°</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Angle Y</div>
+                        <div class="data-value" id="angleY">1.8°</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Reed Switch</div>
+                        <div class="data-value" id="reedSwitch">Closed</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Distance from Base</div>
+                        <div class="data-value" id="distance">2.1m</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Panel -->
+            <div class="panel">
+                <h2>🗺️ Location Tracking</h2>
+                <div class="data-item">
+                    <div class="data-label">Current Position</div>
+                    <div class="data-value">
+                        <a href="#" id="mapLink" target="_blank" style="color: #4299e1; text-decoration: none;">
+                            View on Maps
+                        </a>
+                    </div>
+                </div>
+                <div class="map-container" id="mapContainer">
+                    🗺️ Interactive Map View<br>
+                    <small>Click "View on Maps" to see exact location</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Log -->
+        <div class="panel alert-log">
+            <h2>🚨 Recent Alerts</h2>
+            <div id="alertContainer">
+                <div class="alert-item info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div class="alert-content">
+                        <div>System initialized successfully</div>
+                        <div class="alert-time">2024-12-19 10:30:15</div>
+                    </div>
+                </div>
+                <div class="alert-item warning">
+                    <div class="alert-icon">⚠️</div>
+                    <div class="alert-content">
+                        <div>GPS signal temporarily weak</div>
+                        <div class="alert-time">2024-12-19 09:45:22</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn" onclick="refreshData()">🔄 Refresh Data</button>
+            <button class="btn" onclick="exportData()">📥 Export Log</button>
+            <button class="btn" onclick="testAlert()">🧪 Test Alert</button>
+        </div>
+    </div>
+
+    <script>
+        // Simulated sensor data (replace with actual API calls)
+        let sensorData = {
+            latitude: 33.5731,
+            longitude: -7.5898,
+            angleX: 2.3,
+            angleY: 1.8,
+            reedState: 1,
+            distance: 2.1,
+            gpsFixed: true,
+            satellites: 8,
+            lastUpdate: new Date()
+        };
+
+        // Update display with current data
+        function updateDisplay() {
+            document.getElementById('latitude').textContent = sensorData.latitude.toFixed(6);
+            document.getElementById('longitude').textContent = sensorData.longitude.toFixed(6);
+            document.getElementById('angleX').textContent = sensorData.angleX.toFixed(1) + '°';
+            document.getElementById('angleY').textContent = sensorData.angleY.toFixed(1) + '°';
+            document.getElementById('reedSwitch').textContent = sensorData.reedState ? 'Closed' : 'Open';
+            document.getElementById('distance').textContent = sensorData.distance.toFixed(1) + 'm';
+            document.getElementById('lastUpdate').textContent = sensorData.lastUpdate.toLocaleTimeString();
+            
+            // Update map link
+            const mapUrl = `https://maps.google.com/?q=${sensorData.latitude},${sensorData.longitude}`;
+            document.getElementById('mapLink').href = mapUrl;
+            
+            // Update status cards
+            updateStatusCards();
+        }
+
+        function updateStatusCards() {
+            // Cover status
+            const coverIcon = document.getElementById('coverStatus');
+            const coverValue = document.getElementById('coverValue');
+            if (sensorData.reedState === 0) {
+                coverIcon.className = 'status-icon status-danger';
+                coverIcon.textContent = '🚨';
+                coverValue.textContent = 'REMOVED';
+            } else {
+                coverIcon.className = 'status-icon status-safe';
+                coverIcon.textContent = '🛡️';
+                coverValue.textContent = 'Secure';
+            }
+
+            // Tilt status
+            const tiltIcon = document.getElementById('tiltStatus');
+            const tiltValue = document.getElementById('tiltValue');
+            const maxTilt = Math.max(Math.abs(sensorData.angleX), Math.abs(sensorData.angleY));
+            if (maxTilt > 20) {
+                tiltIcon.className = 'status-icon status-danger';
+                tiltIcon.textContent = '⚠️';
+                tiltValue.textContent = 'TILTED';
+            } else if (maxTilt > 15) {
+                tiltIcon.className = 'status-icon status-warning';
+                tiltIcon.textContent = '📐';
+                tiltValue.textContent = 'Warning';
+            } else {
+                tiltIcon.className = 'status-icon status-safe';
+                tiltIcon.textContent = '📐';
+                tiltValue.textContent = 'Normal';
+            }
+
+            // Location status
+            const locationIcon = document.getElementById('locationStatus');
+            const locationValue = document.getElementById('locationValue');
+            if (sensorData.distance > 8) {
+                locationIcon.className = 'status-icon status-danger';
+                locationIcon.textContent = '🚨';
+                locationValue.textContent = 'MOVED';
+            } else if (sensorData.distance > 5) {
+                locationIcon.className = 'status-icon status-warning';
+                locationIcon.textContent = '⚠️';
+                locationValue.textContent = 'Warning';
+            } else {
+                locationIcon.className = 'status-icon status-safe';
+                locationIcon.textContent = '📍';
+                locationValue.textContent = 'Tracking';
+            }
+
+            // GPS status
+            const gpsIcon = document.getElementById('gpsStatus');
+            const gpsValue = document.getElementById('gpsValue');
+            if (sensorData.gpsFixed && sensorData.satellites >= 4) {
+                gpsIcon.className = 'status-icon status-safe';
+                gpsIcon.textContent = '🛰️';
+                gpsValue.textContent = 'Strong';
+            } else if (sensorData.satellites >= 3) {
+                gpsIcon.className = 'status-icon status-warning';
+                gpsIcon.textContent = '📡';
+                gpsValue.textContent = 'Weak';
+            } else {
+                gpsIcon.className = 'status-icon status-danger';
+                gpsIcon.textContent = '❌';
+                gpsValue.textContent = 'Lost';
+            }
+        }
+
+        function addAlert(type, message) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            const now = new Date();
+            
+            let iconClass, icon;
+            switch(type) {
+                case 'danger':
+                    iconClass = 'alert-item';
+                    icon = '🚨';
+                    break;
+                case 'warning':
+                    iconClass = 'alert-item warning';
+                    icon = '⚠️';
+                    break;
+                default:
+                    iconClass = 'alert-item info';
+                    icon = 'ℹ️';
+            }
+            
+            alertDiv.className = iconClass;
+            alertDiv.innerHTML = `
+                <div class="alert-icon">${icon}</div>
+                <div class="alert-content">
+                    <div>${message}</div>
+                    <div class="alert-time">${now.toLocaleString()}</div>
+                </div>
+            `;
+            
+            alertContainer.insertBefore(alertDiv, alertContainer.firstChild);
+            
+            // Keep only last 10 alerts
+            while (alertContainer.children.length > 10) {
+                alertContainer.removeChild(alertContainer.lastChild);
+            }
+        }
+
+        // API Functions (replace with your actual API endpoints)
+        async function fetchSensorData() {
+            try {
+                // Replace with your actual API endpoint
+                // const response = await fetch('/api/sensor-data');
+                // const data = await response.json();
+                
+                // For now, simulate changing data
+                sensorData.angleX += (Math.random() - 0.5) * 2;
+                sensorData.angleY += (Math.random() - 0.5) * 2;
+                sensorData.distance += (Math.random() - 0.5) * 0.5;
+                sensorData.lastUpdate = new Date();
+                
+                updateDisplay();
+            } catch (error) {
+                console.error('Failed to fetch sensor data:', error);
+                addAlert('danger', 'Failed to update sensor data');
+            }
+        }
+
+        function refreshData() {
+            fetchSensorData();
+            addAlert('info', 'Data refreshed manually');
+        }
+
+        function exportData() {
+            const data = JSON.stringify(sensorData, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sensor_data_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function testAlert() {
+            addAlert('warning', 'Test alert sent successfully');
+        }
+
+        // Initialize display
+        updateDisplay();
+
+        // Auto-refresh every 30 seconds
+        setInterval(fetchSensorData, 30000);
+
+        // Simulate receiving data from Arduino (replace with actual WebSocket or API polling)
+        function simulateArduinoData() {
+            // This would be replaced with actual data reception from your Arduino
+            if (Math.random() < 0.1) { // 10% chance of alert
+                if (Math.random() < 0.5) {
+                    addAlert('danger', 'Manhole cover potentially removed!');
+                    sensorData.reedState = 0;
+                } else {
+                    addAlert('warning', 'Tilt angle exceeds threshold');
+                    sensorData.angleX = 25;
+                }
+                updateDisplay();
+            }
+        }
+
+        // Simulate alerts occasionally
+        setInterval(simulateArduinoData, 10000);
+    </script>
+</body>
+</html>
